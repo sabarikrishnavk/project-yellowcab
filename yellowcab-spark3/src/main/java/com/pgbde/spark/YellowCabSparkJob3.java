@@ -8,9 +8,10 @@ import org.apache.spark.sql.DataFrameReader;
 import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
 import org.apache.spark.sql.SparkSession;
+import static org.apache.spark.sql.functions.col;
 
 
-public class YellowCabSparkJob1  {
+public class YellowCabSparkJob3  {
 
 
 	String[] columnNames = new String[] {
@@ -36,7 +37,7 @@ public class YellowCabSparkJob1  {
 			//conf = new SparkConf().setAppName("my_spark_App");
 			session = SparkSession.builder().appName("YellowCabSparkJob1").getOrCreate();
 		}
-		YellowCabSparkJob1 job = new YellowCabSparkJob1();
+		YellowCabSparkJob3 job = new YellowCabSparkJob3();
 		job.execute(session,args[0],args[1]);
 		
 		
@@ -48,10 +49,9 @@ public class YellowCabSparkJob1  {
 		Dataset<Row> rows = reader.option("inferSchema", "true")
 				.csv(input).toDF(columnNames);
 		
-		rows.createOrReplaceTempView("TEMPTABLE");
-		//rows.select("VendorID","tpep_pickup_datetime").show();
-		Dataset<Row> detailsRDD = session.sql("SELECT * FROM TEMPTABLE where "+ Input.filterString);
-		detailsRDD.write().format("csv").save(output);
+		Dataset<Row> detailsRDD = rows.groupBy("payment_type").count();
+		
+		detailsRDD.sort("count").write().format("csv").save(output);
 	}
  
 }

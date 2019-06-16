@@ -10,7 +10,7 @@ import org.apache.spark.sql.Row;
 import org.apache.spark.sql.SparkSession;
 
 
-public class YellowCabSparkJob1  {
+public class YellowCabSparkJob2  {
 
 
 	String[] columnNames = new String[] {
@@ -36,7 +36,7 @@ public class YellowCabSparkJob1  {
 			//conf = new SparkConf().setAppName("my_spark_App");
 			session = SparkSession.builder().appName("YellowCabSparkJob1").getOrCreate();
 		}
-		YellowCabSparkJob1 job = new YellowCabSparkJob1();
+		YellowCabSparkJob2 job = new YellowCabSparkJob2();
 		job.execute(session,args[0],args[1]);
 		
 		
