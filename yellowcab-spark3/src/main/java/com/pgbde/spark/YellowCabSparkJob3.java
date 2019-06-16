@@ -8,6 +8,7 @@ import org.apache.spark.sql.DataFrameReader;
 import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
 import org.apache.spark.sql.SparkSession;
+
 import static org.apache.spark.sql.functions.col;
 import static org.apache.spark.sql.functions.desc;
 
@@ -50,9 +51,9 @@ public class YellowCabSparkJob3  {
 		Dataset<Row> rows = reader.option("inferSchema", "true")
 				.csv(input).toDF(columnNames);
 		
-		Dataset<Row> detailsRDD = rows.groupBy("payment_type").count().sort(desc("count"));
-		
-		detailsRDD.write().format("csv").save(output);
+		Dataset<Row> detailsRDD = rows.groupBy("payment_type").count();
+		Dataset<Row> sortRDD = detailsRDD.sort(desc("count"));
+		sortRDD.coalesce(1).write().format("csv").save(output);
 	}
  
 }
