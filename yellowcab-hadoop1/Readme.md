@@ -30,3 +30,7 @@ sudo rm -rf /yarn/nm/usercache/ec2-user
 
 nohup hadoop jar target/yellowcab-hadoop1-0.0.1.jar com.pgbde.hadoop.YellowCabJob1  /home/ec2-user/spark_assignment/input_dataset /home/ec2-user/spark_assignment/job1/ >> job1.txt
  
+nohup hadoop jar yellowcab-hadoop1-0.0.1.jar \
+com.pgbde.hadoop.YellowCabJob1 \
+/user/ec2-user/spark_assignment/yellow_tripdata/yellow_tripdata* \
+/user/ec2-user/spark_assignment/output/mapred/job1 >>mapred-job1.txt

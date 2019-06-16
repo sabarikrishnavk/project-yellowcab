@@ -27,5 +27,13 @@ Copy target/yellowcab-spark3-0.0.1.jar to /media/sf_VM/yellowcab-spark3-0.0.1.ja
 Execute >>
 sudo rm -rf /yarn/nm/usercache/ec2-user
 
-nohup spark jar target/yellowcab-spark3-0.0.1.jar com.pgbde.spark.YellowCabSparkJob3  /home/ec2-user/spark_assignment/input_dataset /home/ec2-user/spark_assignment/job3/ >> job3.txt
+nohup spark jar target/yellowcab-spark3-0.0.1.jar com.pgbde.spark.YellowCabSparkJob3  /home/ec2-user/spark_assignment/input_dataset
+ /home/ec2-user/spark_assignment/spark/job3/ >> job3.txt
+ 
+nohup spark2-submit --class com.pgbde.spark.YellowCabSparkJob3 \
+--master yarn --deploy-mode client \
+yellowcab-spark3-0.0.1.jar \
+/user/ec2-user/spark_assignment/yellow_tripdata/yellow_tripdata* \
+/user/ec2-user/spark_assignment/output/spark/job3 >> spark-job3.txt
+ 
  
