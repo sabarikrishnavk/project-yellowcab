@@ -1,5 +1,7 @@
 package com.pgbde.spark;
 
+import org.apache.log4j.Level;
+import org.apache.log4j.Logger;
 import org.apache.spark.SparkConf;
 import org.apache.spark.SparkContext;
 import org.apache.spark.api.java.JavaRDD;
@@ -28,19 +30,24 @@ public class YellowCabSparkJob3  {
 		};
 
 	public static void main(String[] args) throws Exception {
+		Logger.getLogger("org").setLevel(Level.ERROR);
 		SparkSession session = null;
 		//SparkConf conf =null;
 		// For running on Eclipse- local mode
 		if(args.length >2){
+			System.out.println("Running in local mode");
 			//sessi = new SparkConf().setAppName("my_spark_App").setMaster();
-			session = SparkSession.builder().appName("YellowCabSparkJob1").master("local[*]").getOrCreate();
+			session = SparkSession.builder().appName("YellowCabSparkJob3").master("local[*]").getOrCreate();
 		}else{
 		// For running it on EC2 - Yarn client mode
 			//conf = new SparkConf().setAppName("my_spark_App");
-			session = SparkSession.builder().appName("YellowCabSparkJob1").getOrCreate();
+			session = SparkSession.builder().appName("YellowCabSparkJob3").getOrCreate();
 		}
 		YellowCabSparkJob3 job = new YellowCabSparkJob3();
 		job.execute(session,args[0],args[1]);
+		
+
+		System.out.println("Finished process");
 		
 		
 		
