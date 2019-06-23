@@ -7,5 +7,6 @@ public class Input {
 	 * Filter all the records having RatecodeID as 4.
 
 	 */
+	public static final String 	RatecodeID = "4" ;
 	public static final String filterString =  "RatecodeID='4'  "; 
 }

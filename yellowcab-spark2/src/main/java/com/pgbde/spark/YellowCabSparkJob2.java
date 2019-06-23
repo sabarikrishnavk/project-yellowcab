@@ -1,63 +1,101 @@
 package com.pgbde.spark;
 
+import java.io.StringReader;
+import java.util.Iterator;
+
 import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
 import org.apache.spark.SparkConf;
-import org.apache.spark.SparkContext;
+import org.apache.spark.api.java.JavaPairRDD;
 import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.api.java.JavaSparkContext;
-import org.apache.spark.sql.DataFrameReader;
-import org.apache.spark.sql.Dataset;
-import org.apache.spark.sql.Row;
-import org.apache.spark.sql.SparkSession;
+import org.apache.spark.api.java.function.FlatMapFunction;
+
+import scala.Tuple2;
+import au.com.bytecode.opencsv.CSVReader;
 
 
 public class YellowCabSparkJob2  {
 
 
-	String[] columnNames = new String[] {
-			"VendorID",
-			"tpep_pickup_datetime","tpep_dropoff_datetime",
-			"passenger_count","trip_distance",
-			"RatecodeID",
-			"fwd_flag","PULocationID","DOLocationID",
-			"payment_type",
-			"fare_amount","extra","mta_tax","tip_amount","tolls_amount",
-			"improvement_surcharge","total_amount" 
-		};
-
 	public static void main(String[] args) throws Exception {
 		Logger.getLogger("org").setLevel(Level.ERROR);
-		SparkSession session = null;
-		//SparkConf conf =null;
+		//SparkSession session = null;
+		SparkConf conf =null;
 		// For running on Eclipse- local mode
 		if(args.length >2){
 			System.out.println("Running in local mode");
-			//sessi = new SparkConf().setAppName("my_spark_App").setMaster();
-			session = SparkSession.builder().appName("YellowCabSparkJob2").master("local[*]").getOrCreate();
+			conf = new SparkConf().setAppName("my_spark_App").setMaster("local[*]");
+			//session = SparkSession.builder().appName("YellowCabSparkJob1").master("local[*]").getOrCreate();
 		}else{
 		// For running it on EC2 - Yarn client mode
-			//conf = new SparkConf().setAppName("my_spark_App");
-			session = SparkSession.builder().appName("YellowCabSparkJob2").getOrCreate();
+			conf = new SparkConf().setAppName("my_spark_App");
+			//session = SparkSession.builder().appName("YellowCabSparkJob1").getOrCreate();
 		}
 		YellowCabSparkJob2 job = new YellowCabSparkJob2();
-		job.execute(session,args[0],args[1]);
+		job.execute(conf,args[0],args[1]);
 		
 
 		System.out.println("Finished process");
 		
-		
 	}
 
-	private void execute(SparkSession session, String input, String output) {
-		DataFrameReader reader = session.read();
-		Dataset<Row> rows = reader.option("inferSchema", "true")
-				.csv(input).toDF(columnNames);
+	@SuppressWarnings("resource")
+	private void execute(SparkConf sparkConf, String input, String output) {
+
+		long start = System.currentTimeMillis();
+		JavaSparkContext ctx = new JavaSparkContext(sparkConf);
+		JavaPairRDD<String,String> csvData = ctx.wholeTextFiles(input);
 		
-		rows.createOrReplaceTempView("TEMPTABLE");
-		//rows.select("VendorID","tpep_pickup_datetime").show();
-		Dataset<Row> detailsRDD = session.sql("SELECT * FROM TEMPTABLE where "+ Input.filterString);
-		detailsRDD.write().format("csv").save(output);
+		JavaRDD<String[]> rowMapRdd = csvData.flatMap(new ParseLine());
+		
+		
+		
+		JavaRDD<String[]> filterRDD = rowMapRdd.filter( record -> {
+			if(record.length > 6 && Input.RatecodeID.equals(record[5])){
+				return true;
+			}
+			return false;
+		}
+		);
+		
+		JavaRDD<Object> result = filterRDD.map(records ->{
+			return String.join(",", records);
+		});
+
+
+		long total = System.currentTimeMillis() - start;
+		System.out.println("Computation time taken: " + total / 60000 + " mins");
+
+		System.out.println("Saving results...");
+		result.saveAsTextFile(output);
+
+		// closing spark context
+		ctx.close();
+		total = System.currentTimeMillis() - start;
+		System.out.println("total time taken: " + total / 60000 + " mins");
+		
+		
+		
+	}
+	
+	public static class ParseLine implements FlatMapFunction<Tuple2<String,String>,String[] >{
+
+		/**
+		 * 
+		 */
+		private static final long serialVersionUID = 5277342667942925905L;
+
+		@Override
+		public Iterator<String[]> call(Tuple2<String, String> file)
+				throws Exception { 
+			return extracted(file).readAll().iterator();
+		}
+
+		private CSVReader extracted(Tuple2<String, String> file) {
+			return new CSVReader(new StringReader(file._2) );
+		}
+		
 	}
  
 }
