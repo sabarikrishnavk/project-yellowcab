@@ -41,17 +41,18 @@ public class YellowCabSparkJob1  {
 		
 	}
 
+	@SuppressWarnings("resource")
 	private void execute(SparkConf sparkConf, String input, String output) {
 
 		long start = System.currentTimeMillis();
 		JavaSparkContext ctx = new JavaSparkContext(sparkConf);
 		JavaPairRDD<String,String> csvData = ctx.wholeTextFiles(input);
 		
-		JavaRDD<String[]> rows = csvData.flatMap(new ParseLine());
+		JavaRDD<String[]> rowMapRdd = csvData.flatMap(new ParseLine());
 		
 		
 		
-		JavaRDD<String[]> result = rows.filter( record -> {
+		JavaRDD<String[]> filterRDD = rowMapRdd.filter( record -> {
 			if(record.length > 5 && Input.VendorID.equals(record[0]) &&
 						Input.tpep_pickup_datetime.equals(record[1])&&
 						Input.tpep_dropoff_datetime.equals(record[2])&&
@@ -62,6 +63,10 @@ public class YellowCabSparkJob1  {
 			return false;
 		}
 		);
+		
+		JavaRDD<Object> result = filterRDD.map(records ->{
+			return String.join(",", records);
+		});
 
 
 		long total = System.currentTimeMillis() - start;
