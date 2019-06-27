@@ -19,7 +19,7 @@ public class YellowCabMapper  extends
 		String[] split = record.toString().split("[,]");
 		try{ 
 			 
-			System.out.println("record "+split[Input.paymentColumn]);
+			//System.out.println("record "+split[Input.paymentColumn]);
 			context.write(new Text(split[Input.paymentColumn]),new LongWritable(1));
 			 
 		}catch(Exception e){

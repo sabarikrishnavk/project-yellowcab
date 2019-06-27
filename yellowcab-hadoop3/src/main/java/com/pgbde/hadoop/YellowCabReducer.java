@@ -18,7 +18,7 @@ public class YellowCabReducer extends Reducer<Text, LongWritable, Text, LongWrit
 		for(LongWritable i : values){
 			count = count+ i.get();
 		}
-		System.out.println( key + "::"+ count);
+		//System.out.println( key + "::"+ count);
 		context.write(key, new LongWritable(count));
 	}
 }

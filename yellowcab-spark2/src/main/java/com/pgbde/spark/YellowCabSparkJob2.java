@@ -1,18 +1,10 @@
 package com.pgbde.spark;
 
-import java.io.StringReader;
-import java.util.Iterator;
-
 import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
 import org.apache.spark.SparkConf;
-import org.apache.spark.api.java.JavaPairRDD;
 import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.api.java.JavaSparkContext;
-import org.apache.spark.api.java.function.FlatMapFunction;
-
-import scala.Tuple2;
-import au.com.bytecode.opencsv.CSVReader;
 
 
 public class YellowCabSparkJob2  {
@@ -25,11 +17,11 @@ public class YellowCabSparkJob2  {
 		// For running on Eclipse- local mode
 		if(args.length >2){
 			System.out.println("Running in local mode");
-			conf = new SparkConf().setAppName("my_spark_App").setMaster("local[*]");
+			conf = new SparkConf().setAppName("SparkJob2").setMaster("local[*]");
 			//session = SparkSession.builder().appName("YellowCabSparkJob1").master("local[*]").getOrCreate();
 		}else{
 		// For running it on EC2 - Yarn client mode
-			conf = new SparkConf().setAppName("my_spark_App");
+			conf = new SparkConf().setAppName("SparkJob2");
 			//session = SparkSession.builder().appName("YellowCabSparkJob1").getOrCreate();
 		}
 		YellowCabSparkJob2 job = new YellowCabSparkJob2();
@@ -45,10 +37,10 @@ public class YellowCabSparkJob2  {
 
 		long start = System.currentTimeMillis();
 		JavaSparkContext ctx = new JavaSparkContext(sparkConf);
-		JavaPairRDD<String,String> csvData = ctx.wholeTextFiles(input);
+	
+		JavaRDD<String> plines = ctx.textFile(input, 1);
 		
-		JavaRDD<String[]> rowMapRdd = csvData.flatMap(new ParseLine());
-		
+		JavaRDD<String[]> rowMapRdd = plines.map(line -> line.split(","));
 		
 		
 		JavaRDD<String[]> filterRDD = rowMapRdd.filter( record -> {
@@ -76,26 +68,7 @@ public class YellowCabSparkJob2  {
 		System.out.println("total time taken: " + total / 60000 + " mins");
 		
 		
-		
-	}
-	
-	public static class ParseLine implements FlatMapFunction<Tuple2<String,String>,String[] >{
-
-		/**
-		 * 
-		 */
-		private static final long serialVersionUID = 5277342667942925905L;
-
-		@Override
-		public Iterator<String[]> call(Tuple2<String, String> file)
-				throws Exception { 
-			return extracted(file).readAll().iterator();
-		}
-
-		private CSVReader extracted(Tuple2<String, String> file) {
-			return new CSVReader(new StringReader(file._2) );
-		}
-		
+	 	
 	}
  
 }

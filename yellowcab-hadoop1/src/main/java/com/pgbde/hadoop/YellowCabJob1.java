@@ -35,7 +35,7 @@ public class YellowCabJob1 extends Configured implements Tool {
 			args);
 
 		long total = System.currentTimeMillis() - start;
-		System.out.println("Computaion time taken: " + total / 60000 + " mins");
+		System.out.println("Computation time taken: " + total / 60000 + " mins");
 			
 		System.exit(returnStatus);
 	}

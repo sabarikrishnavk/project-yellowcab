@@ -1,7 +1,5 @@
 package com.pgbde.spark;
 
-import java.io.StringReader;
-import java.util.Iterator;
 import java.util.stream.StreamSupport;
 
 import org.apache.log4j.Level;
@@ -10,10 +8,8 @@ import org.apache.spark.SparkConf;
 import org.apache.spark.api.java.JavaPairRDD;
 import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.api.java.JavaSparkContext;
-import org.apache.spark.api.java.function.FlatMapFunction;
 
 import scala.Tuple2;
-import au.com.bytecode.opencsv.CSVReader;
 
 
 public class YellowCabSparkJob3  {
@@ -26,11 +22,11 @@ public class YellowCabSparkJob3  {
 		// For running on Eclipse- local mode
 		if(args.length >2){
 			System.out.println("Running in local mode");
-			conf = new SparkConf().setAppName("my_spark_App").setMaster("local[*]");
+			conf = new SparkConf().setAppName("SparkJob3").setMaster("local[*]");
 			//session = SparkSession.builder().appName("YellowCabSparkJob1").master("local[*]").getOrCreate();
 		}else{
 		// For running it on EC2 - Yarn client mode
-			conf = new SparkConf().setAppName("my_spark_App");
+			conf = new SparkConf().setAppName("SparkJob3");
 			//session = SparkSession.builder().appName("YellowCabSparkJob1").getOrCreate();
 		}
 		YellowCabSparkJob3 job = new YellowCabSparkJob3();
@@ -46,28 +42,31 @@ public class YellowCabSparkJob3  {
 
 		long start = System.currentTimeMillis();
 		JavaSparkContext ctx = new JavaSparkContext(sparkConf);
-		JavaPairRDD<String,String> csvData = ctx.wholeTextFiles(input);
-		//Get the rows from csv
-		JavaRDD<String[]> rowMapRdd = csvData.flatMap(new ParseLine());
+		
+		JavaRDD<String> plines = ctx.textFile(input, 1);
+		
+		JavaRDD<String[]> rowMapRdd = plines.map(line -> line.split(","));
+		
 		 
 		//group by payment field
 		
-		JavaPairRDD<String, Iterable<String[]>> groupByRDD = rowMapRdd.groupBy(
-				record -> record[Input.paymentColumn] 
-		);
-		 
-		//count the number of payments 
-		JavaPairRDD<String,Long> countRDD = groupByRDD.mapToPair(
-			pairRdd -> {
-				return new Tuple2<String, Long>(pairRdd._1, 
-						StreamSupport.stream(pairRdd._2.spliterator(), true).count());
+		JavaPairRDD<String,Long> paymentMap = rowMapRdd.mapToPair(record ->{
+			if(record.length >Input.paymentColumn ) {
+				return  new Tuple2<String, Long>(record[Input.paymentColumn],1L);
 			}
-		); 
+			return new Tuple2<String, Long>("-1",0L);
+		});
+		//Use reduce by key to improve performance
+		 JavaPairRDD<String, Long> groupByRDD = paymentMap.reduceByKey((x,y)-> x+y );
 		
 		//to sort - swap the RDD and sort by key (count) and swap back
-		JavaPairRDD<String,Long>  result = 
-				countRDD.mapToPair(x ->x.swap()).sortByKey(false).mapToPair(x->x.swap());
+		JavaPairRDD<Long,String>  tempSort = 
+				groupByRDD.mapToPair(x ->x.swap());
 		
+		tempSort.cache();		
+				
+		JavaPairRDD<String,Long>  result = tempSort.sortByKey(false).mapToPair(x->x.swap());
+
 		long total = System.currentTimeMillis() - start;
 		System.out.println("Computation time taken: " + total / 60000 + " mins");
 
@@ -79,27 +78,6 @@ public class YellowCabSparkJob3  {
 		total = System.currentTimeMillis() - start;
 		System.out.println("total time taken: " + total / 60000 + " mins");
 		
-		
-		
-	}
-	
-	public static class ParseLine implements FlatMapFunction<Tuple2<String,String>,String[] >{
-
-		/**
-		 * 
-		 */
-		private static final long serialVersionUID = 5277342667942925905L;
-
-		@Override
-		public Iterator<String[]> call(Tuple2<String, String> file)
-				throws Exception { 
-			return extracted(file).readAll().iterator();
-		}
-
-		private CSVReader extracted(Tuple2<String, String> file) {
-			return new CSVReader(new StringReader(file._2) );
-		}
-		
-	}
+	} 
  
 }

@@ -33,3 +33,7 @@ nohup spark2-submit --class com.pgbde.spark.YellowCabSparkJob2 \
 yellowcab-spark2-0.0.1.jar \
 /user/ec2-user/spark_assignment/yellow_tripdata/yellow_tripdata* \
 /user/ec2-user/spark_assignment/output/spark/job2 >>spark-job2.txt
+
+spark-submit --class com.pgbde.spark.YellowCabSparkJob2 --master spark://127.0.0.1:7077 --deploy-mode client /home/workspace/project-yellowcab/yellowcab-spark2/target/yellowcab-spark2-0.0.1.jar /home/workspace/input/ /home/workspace/output/spark/job2
+ 
+ 
